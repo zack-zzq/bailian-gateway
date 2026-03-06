@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import AsyncIterator
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -16,8 +17,30 @@ from .config import settings
 logger = logging.getLogger("bailian_gateway")
 
 # In-memory set of models whose free quota has been exhausted.
-# Free quota exhaustion is irreversible, so we never remove entries.
-exhausted_models: set[str] = set()
+# Free quota exhaustion is irreversible, so we persist this to a file.
+DATA_DIR = Path("data")
+EXHAUSTED_MODELS_FILE = DATA_DIR / "exhausted_models.json"
+
+def _load_exhausted_models() -> set[str]:
+    """Load the set of exhausted models from disk."""
+    if EXHAUSTED_MODELS_FILE.exists():
+        try:
+            with open(EXHAUSTED_MODELS_FILE, "r", encoding="utf-8") as f:
+                return set(json.load(f))
+        except Exception as e:
+            logger.error(f"Failed to load exhausted models from {EXHAUSTED_MODELS_FILE}: {e}")
+    return set()
+
+def _save_exhausted_models() -> None:
+    """Save the set of exhausted models to disk."""
+    try:
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        with open(EXHAUSTED_MODELS_FILE, "w", encoding="utf-8") as f:
+            json.dump(list(exhausted_models), f, indent=2)
+    except Exception as e:
+        logger.error(f"Failed to save exhausted models to {EXHAUSTED_MODELS_FILE}: {e}")
+
+exhausted_models: set[str] = _load_exhausted_models()
 
 # Shared async HTTP client (created lazily)
 _client: httpx.AsyncClient | None = None
@@ -129,6 +152,7 @@ async def _proxy_non_streaming(
         if _is_quota_exhausted_error(response.status_code, response.content):
             logger.warning(f"Model {model_id} quota exhausted, trying next model...")
             exhausted_models.add(model_id)
+            _save_exhausted_models()
             continue
 
         # For any other response (success or non-quota error), return it
@@ -182,6 +206,7 @@ async def _proxy_streaming(
                     f"Model {model_id} quota exhausted, trying next model..."
                 )
                 exhausted_models.add(model_id)
+                _save_exhausted_models()
                 continue
 
             # Non-quota error, return it to the client
