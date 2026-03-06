@@ -1,0 +1,10 @@
+services:
+  gateway:
+    build: .
+    ports:
+      - "${PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      - MODEL_PRIORITY=${MODEL_PRIORITY:-qwen-turbo,qwen-plus,qwen-max}
+    restart: unless-stopped

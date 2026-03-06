@@ -1,0 +1,19 @@
+[project]
+name = "bailian-gateway"
+version = "0.1.0"
+description = "OpenAI-compatible gateway for Alibaba Cloud Bailian with automatic model fallback on quota exhaustion"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.135.1",
+    "httpx>=0.28.1",
+    "python-dotenv>=1.2.2",
+    "uvicorn[standard]>=0.41.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bailian_gateway"]
