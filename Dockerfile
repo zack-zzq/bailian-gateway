@@ -8,7 +8,8 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-install-project --no-dev
 
-# Copy source code and install the project
+# Copy source code and documentation required for the build
+COPY README.md ./
 COPY src/ src/
 RUN uv sync --frozen --no-dev
 
