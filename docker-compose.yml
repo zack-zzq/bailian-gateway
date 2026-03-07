@@ -8,5 +8,6 @@ services:
     volumes:
       - ./data:/app/data
     environment:
+      - PORT=8000
       - MODEL_PRIORITY=${MODEL_PRIORITY:-qwen-turbo,qwen-plus,qwen-max}
     restart: unless-stopped
