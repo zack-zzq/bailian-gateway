@@ -60,7 +60,7 @@ async def close_client() -> None:
     """Close the shared httpx client."""
     global _client
     if _client is not None and not _client.is_closed:
-        await _client.close()
+        await _client.aclose()
         _client = None
 
 
